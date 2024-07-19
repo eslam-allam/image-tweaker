@@ -10,6 +10,7 @@ import (
 
 	"github.com/eslam-allam/image-tweaker/internal/image"
 	"github.com/spf13/cobra"
+	"github.com/thediveo/enumflag/v2"
 )
 
 var (
@@ -17,7 +18,7 @@ var (
 	targetWidth  uint
 	targetHeight uint
 
-	targetEncoding string
+	targetFormat image.ImgFormat = image.UNSUPPORTED
 )
 
 // transformCmd represents the transform command
@@ -25,12 +26,13 @@ var transformCmd = &cobra.Command{
 	Use:   "transform [image|directory]",
 	Args:  cobra.ExactArgs(1),
 	Short: "Do multiple operations",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Long: `Transform image by doing multiple operations such as resizing and
+changing the format. 
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+Example:
+	image-tweaker transform --resize -w 500 --format webp
+
+this will resize the image to be 500px wide and convert the format to webp`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Printf("transform called with args: %v\n", args)
 		path, err := filepath.Abs(args[0])
@@ -48,8 +50,8 @@ to quickly create a Cobra application.`,
 		}
 
 		enc := format
-		if targetEncoding != "" {
-			enc, err = image.EncodingFromFormat(targetEncoding)
+		if targetFormat != image.UNSUPPORTED {
+			enc, err = image.EncodingFromFormat(targetFormat)
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -75,14 +77,22 @@ to quickly create a Cobra application.`,
 func init() {
 	rootCmd.AddCommand(transformCmd)
 
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-
 	transformCmd.Flags().BoolVarP(&resize, "resize", "r", false, "Resize image (used with width and height flags)")
 	transformCmd.Flags().UintVarP(&targetWidth, "target-width", "w", 0, "Target max width for image if resize option is used (0) for no change")
 	transformCmd.Flags().UintVarP(&targetHeight, "target-height", "v", 0, "Target max height for image if resize option is used (0) for no change")
 
-	transformCmd.Flags().StringVarP(&targetEncoding, "encoding", "e", "", "Save output image in this format. Valid values are 'jpeg', 'png', and 'webp'")
+	te := enumflag.NewWithoutDefault(
+		&targetFormat,
+		"format",
+		image.GetFormatNames(),
+		enumflag.EnumCaseInsensitive,
+	)
+	te.RegisterCompletion(transformCmd, "format",
+		enumflag.Help[image.ImgFormat]{
+			image.JPEG: "jpeg image format",
+			image.PNG:  "Png image format",
+			image.WEBP: "Webp image format",
+		})
+
+	transformCmd.Flags().VarP(te, "format", "f", "Save output image in this format. Valid values are 'jpeg', 'png', and 'webp'")
 }

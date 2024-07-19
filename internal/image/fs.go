@@ -53,7 +53,7 @@ func ReadImage(path string) (image.Image, imgEncoding, error) {
 	if err != nil {
 		return nil, imgEncoding{}, fmt.Errorf("failed to decode image: '%s': %w", path, err)
 	}
-	supportedFormat, err := EncodingFromFormat(format)
+	supportedFormat, err := EncodingFromFormatName(format)
 	if err != nil {
 		return nil, imgEncoding{}, err
 	}
