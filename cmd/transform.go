@@ -57,8 +57,8 @@ this will resize the image to be 500px wide and convert the format to webp`,
 				os.Exit(1)
 			}
 		}
-
-		outPath := "out." + enc.Extension()
+		imageName := filepath.Base(path)
+		outPath := imageName + "." + enc.Extension()
 		outPath, err = filepath.Abs(outPath)
 		if err != nil {
 			fmt.Println(err)
