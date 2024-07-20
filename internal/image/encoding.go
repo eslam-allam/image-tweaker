@@ -6,8 +6,10 @@ import (
 	"image/jpeg"
 	"image/png"
 	"io"
+	"strings"
 
 	"github.com/chai2010/webp"
+	"github.com/eslam-allam/image-tweaker/internal/cerror"
 	"github.com/thediveo/enumflag/v2"
 )
 
@@ -27,11 +29,20 @@ func (e imgEncoding) Encode(w io.Writer, i image.Image) error {
 	return e.encoder(w, i)
 }
 
-var (
-	jpegEncoding imgEncoding = imgEncoding{format: JPEG, extension: "jpg", encoder: func(w io.Writer, i image.Image) error { return jpeg.Encode(w, i, nil) }}
-	pngEncoding  imgEncoding = imgEncoding{format: PNG, extension: "png", encoder: png.Encode}
-	webpEncoding imgEncoding = imgEncoding{format: WEBP, extension: "webp", encoder: func(w io.Writer, i image.Image) error { return webp.Encode(w, i, nil) }}
-)
+var encodings []imgEncoding = []imgEncoding{
+	{format: JPEG, extension: "jpg", encoder: func(w io.Writer, i image.Image) error { return jpeg.Encode(w, i, nil) }},
+	{format: PNG, extension: "png", encoder: png.Encode},
+	{format: WEBP, extension: "webp", encoder: func(w io.Writer, i image.Image) error { return webp.Encode(w, i, nil) }},
+}
+
+func getEncodingFromExtension(ext string) (imgEncoding, error) {
+	for _, enc := range encodings {
+		if enc.extension == strings.ToLower(ext) {
+			return enc, nil
+		}
+	}
+	return imgEncoding{}, cerror.ErrNotFound
+}
 
 func EncodingFromFormatName(format string) (imgEncoding, error) {
 	foundFormat := UNSUPPORTED
@@ -45,16 +56,12 @@ func EncodingFromFormatName(format string) (imgEncoding, error) {
 }
 
 func EncodingFromFormat(format ImgFormat) (imgEncoding, error) {
-	switch format {
-	case jpegEncoding.format:
-		return jpegEncoding, nil
-	case pngEncoding.format:
-		return pngEncoding, nil
-	case webpEncoding.format:
-		return webpEncoding, nil
-	default:
-		return imgEncoding{}, fmt.Errorf("unsupported image format '%v'", format)
+	for _, enc := range encodings {
+		if enc.format == format {
+			return enc, nil
+		}
 	}
+	return imgEncoding{}, fmt.Errorf("unsupported image format '%v'", format)
 }
 
 type ImgFormat enumflag.Flag

@@ -19,6 +19,10 @@ var (
 	targetHeight uint
 
 	targetFormat image.ImgFormat = image.UNSUPPORTED
+
+	outPath string
+
+	threadCount uint
 )
 
 // transformCmd represents the transform command
@@ -38,39 +42,13 @@ this will resize the image to be 500px wide and convert the format to webp`,
 		path, err := filepath.Abs(args[0])
 		if err != nil {
 			fmt.Println("invalid path provided")
+			os.Exit(1)
 		}
-		img, format, err := image.ReadImage(path)
+		err = image.Transform(path, outPath, resize, targetWidth, targetHeight, targetFormat, threadCount)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
-
-		if resize {
-			img = image.ResizeIfBigger(img, targetWidth, targetHeight)
-		}
-
-		enc := format
-		if targetFormat != image.UNSUPPORTED {
-			enc, err = image.EncodingFromFormat(targetFormat)
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
-		}
-		imageName := filepath.Base(path)
-		outPath := imageName + "." + enc.Extension()
-		outPath, err = filepath.Abs(outPath)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-
-		err = image.SaveImage(img, enc, outPath)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-		fmt.Println(format)
 	},
 }
 
@@ -95,4 +73,7 @@ func init() {
 		})
 
 	transformCmd.Flags().VarP(te, "format", "f", "Save output image in this format. Valid values are 'jpeg', 'png', and 'webp'")
+
+	transformCmd.Flags().StringVarP(&outPath, "output", "o", "output", "output directory or file")
+	transformCmd.Flags().UintVarP(&threadCount, "threads", "t", 0, "[DANGER!] Number of images proccessed at a time (CPU count by default)")
 }

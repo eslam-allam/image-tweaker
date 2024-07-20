@@ -5,41 +5,19 @@ import (
 	"fmt"
 	"image"
 	"os"
+
+	"github.com/eslam-allam/image-tweaker/internal/fs"
 )
-
-type pathtype int
-
-const (
-	File pathtype = iota
-	Directory
-)
-
-func exists(path string) (bool, pathtype, error) {
-	info, err := os.Stat(path)
-	if err == nil {
-		var t pathtype
-		if info.IsDir() {
-			t = Directory
-		} else {
-			t = File
-		}
-		return true, t, nil
-	}
-	if os.IsNotExist(err) {
-		return false, 0, nil
-	}
-	return false, 0, err
-}
 
 func ReadImage(path string) (image.Image, imgEncoding, error) {
-	exists, typ, err := exists(path)
+	exists, typ, err := fs.Exists(path)
 	if err != nil {
 		return nil, imgEncoding{}, err
 	}
 	if !exists {
 		return nil, imgEncoding{}, errors.New("specified path does not exist")
 	}
-	if typ != File {
+	if typ != fs.File {
 		return nil, imgEncoding{}, errors.New("path must refer to a file")
 	}
 
@@ -61,7 +39,7 @@ func ReadImage(path string) (image.Image, imgEncoding, error) {
 }
 
 func SaveImage(img image.Image, encoding imgEncoding, path string) error {
-	exists, _, err := exists(path)
+	exists, _, err := fs.Exists(path)
 	if err != nil {
 		return err
 	}
@@ -80,4 +58,9 @@ func SaveImage(img image.Image, encoding imgEncoding, path string) error {
 		return err
 	}
 	return nil
+}
+
+func IsExtensionSupported(ext string) bool {
+	_, err := getEncodingFromExtension(ext)
+	return err == nil
 }
