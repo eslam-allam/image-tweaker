@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/eslam-allam/image-tweaker/internal/image"
 	"github.com/spf13/cobra"
@@ -38,6 +39,7 @@ Example:
 
 this will resize the image to be 500px wide and convert the format to webp`,
 	Run: func(cmd *cobra.Command, args []string) {
+		start := time.Now()
 		path, err := filepath.Abs(args[0])
 		if err != nil {
 			fmt.Println("invalid path provided")
@@ -50,6 +52,7 @@ this will resize the image to be 500px wide and convert the format to webp`,
 			fmt.Println(err)
 			os.Exit(1)
 		}
+		fmt.Printf("Transformation done in: %s", time.Since(start))
 	},
 }
 
