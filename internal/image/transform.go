@@ -5,6 +5,7 @@ import (
 	"image"
 	"path/filepath"
 	"runtime"
+	"strings"
 
 	"github.com/eslam-allam/image-tweaker/internal/fs"
 	"github.com/nfnt/resize"
@@ -84,11 +85,26 @@ func transformFile(srcPath, dstPath string, resize bool, targetWidth uint, targe
 	if err != nil {
 		return err
 	}
+	srcExtension := filepath.Ext(srcPath)
 	if exists && typ == fs.Directory {
-		dstPath = filepath.Join(dstPath, filepath.Base(srcPath)+"."+enc.extension)
-	} else if filepath.Ext(dstPath) == "" {
-		dstPath = dstPath + "." + enc.extension
+		fileName := ""
+		if srcExtension == "" {
+			fileName = filepath.Base(srcPath) + "." + enc.extension
+		} else if srcExtension != enc.extension {
+			fileName, _ = strings.CutSuffix(filepath.Base(srcPath), srcExtension)
+			fileName += "." + enc.extension
+		}
+		dstPath = filepath.Join(dstPath, fileName)
+	} else {
+		extension := filepath.Ext(dstPath)
+		if extension == "" {
+			dstPath = dstPath + "." + enc.extension
+		} else if extension != enc.extension {
+			dstPath, _ = strings.CutSuffix(dstPath, srcExtension)
+			dstPath += "." + enc.extension
+		}
 	}
+
 	if exists, _, err = fs.Exists(dstPath); err != nil || exists {
 		return fmt.Errorf("output file '%s' already exists", dstPath)
 	}
