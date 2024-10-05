@@ -1,0 +1,23 @@
+name: Build and Release
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: '1.21'
+      - name: Install xgo
+        run: go install src.techknowlogick.com/xgo@latest
+      - name: Build with xgo
+        run: |
+          xgo --out=dist/image-tweaker ./main.go
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: dist/*
